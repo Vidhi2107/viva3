@@ -1,0 +1,33 @@
+name: Welcome New Contributors
+
+on:
+  pull_request:
+    types: [opened]
+
+jobs:
+  greet:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.user.type == 'User'
+    steps:
+      - name: Greet the contributor
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: pulls } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'all',
+              per_page: 100
+            });
+
+            const user = context.payload.pull_request.user.login;
+            const isFirstPR = !pulls.some(pr => pr.user.login === user && pr.number !== context.issue.number);
+
+            if (isFirstPR) {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `🎉 Welcome @${user}! Thanks for your first contribution! We’re glad to have you here.`
+              });
+            }
